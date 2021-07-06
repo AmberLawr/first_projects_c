@@ -6,8 +6,8 @@
 #define FILE_PATH "./test"
 
 void check_firsttime(int fd, char **buffer, char **line);
-void read_substr(char **line, char **buffer, char *ifnewline, char **temp);
-void read_tiln(char **line, char **buffer, char **temp);
+void read_substr(char **line, char **buffer, char *ifnewline);
+void continue_read(char **line, char **buffer);
 
 int	get_next_line(int fd, char **line)
 {
@@ -15,45 +15,50 @@ int	get_next_line(int fd, char **line)
 	char		*ifnewline;
 	char		*temp;
 	int			ifeof;
+	int			length;
 
 	if (buffer == 0)
 		check_firsttime(fd, &buffer, line);
 	else
 	{
-		if (ft_strlen(buffer) != 0)
-			temp = ft_strdup(buffer);
-		ifeof = read(fd, buffer, BUFFER_SIZE);
-		if (ifeof == -1)
-			return (-1);
-		if (ifeof <= BUFFER_SIZE)
+		temp = ft_strdup(buffer);
+		length = ft_strlen(buffer);
+		free (buffer);
+		buffer = (char *)malloc((BUFFER_SIZE + length + 1) * sizeof(char));
+		ft_strlcpy(buffer, temp, length + 1);
+		//strjoin new line untili '\n' with buffer and store it in line.
+	}
+	if (ifeof == -1)
+		return (-1);
+	if (ifeof < BUFFER_SIZE) /*check if EOF is reached*/
+	{
+		ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
+		if (ifnewline == (buffer + BUFFER_SIZE))
+			ifeof = 1;
+		else
 		{
-			ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
-			if (ifnewline == (buffer + BUFFER_SIZE))
-				ifeof = 1;
-			else
-			{
-				read_substr(line, &buffer, ifnewline, &temp);
-				return (0);
-			}
-		}
-		if (ifeof == BUFFER_SIZE)
-		{
-			ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
-			if (ifnewline == (buffer + BUFFER_SIZE))
-			{
-				/*checks when there is no new line found, repeat the process*/
-				read_tiln(line, &buffer, &temp);
-				return (get_next_line(fd, line));
-			}
-			else
-			{
-				/*if new line is found, read until newline and memmove the buffer to the beginning*/
-				read_substr(line, &buffer, ifnewline, &temp);
-				return (1);
-			}
+			read_substr(line, &buffer, ifnewline);
+			return (0);
 		}
 	}
-	return (-1);
+	if (ifeof == BUFFER_SIZE) /*when EOF is not reached*/
+	{
+		ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
+		if (*ifnewline != '\n')
+		{
+			/*checks when there is no new line found, repeat the process*/
+			continue_read(line, &buffer);
+			return (get_next_line(fd, line));
+		}
+		else
+		{
+			/*if new line is found, read until newline and memmove the buffer to the beginning*/
+			read_substr(line, &buffer, ifnewline);
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
 void check_firsttime(int fd, char **buffer, char **line)
@@ -84,38 +89,39 @@ void check_firsttime(int fd, char **buffer, char **line)
 }
 
 /* this function reads the part until '\n' is reached
-1. */
-void read_substr(char **line, char **buffer, char *ifnewline, char **temp)
+1. join the old buffer (which is store in temp) with the line
+2. join the above with the newly created substring*/
+void read_substr(char **line, char **buffer, char *ifnewline)
 {
 	char	*temp_substr;
 	char	*joined_nob;
-	char	*joined_withb;
+	//char	*joined_withb;
 	int		length;
 
 	length = ifnewline - *buffer;
 	temp_substr = ft_substr(*buffer, 0, length);
-	joined_nob = ft_strjoin(*temp, *line);
-	joined_withb = ft_strjoin(joined_nob, temp_substr);
+	joined_nob = ft_strjoin(*line, temp_substr);
+	//joined_withb = ft_strjoin(joined_nob, temp_substr);
 	free(temp_substr);
 	free(*line);
-	*line = joined_withb;
+	*line = joined_nob;
 	*buffer = ft_memmove(*buffer, ifnewline + 1, (BUFFER_SIZE - length));
 }
 
 /* this function will be repeated to keep reading
 1. join the line with temp
 2. join the above with newly read buffer*/
-void read_tiln(char **line, char **buffer, char **temp)
+void continue_read(char **line, char **buffer)
 {
 	char	*joined_nobuf;
-	char	*joined_complete;
+	//char	*joined_complete;
 
-	joined_nobuf = ft_strjoin(*line, *temp);
-	joined_complete = ft_strjoin(joined_nobuf, *buffer);
+	joined_nobuf = ft_strjoin(*line, *buffer);
+	//joined_complete = ft_strjoin(joined_nobuf, *buffer);
 	free(*line);
-	free(*temp);
-	free(buffer);
-	*line = joined_complete;
+	//free(*temp);
+	free(*buffer);
+	*line = joined_nobuf;
 
 }
 
