@@ -17,7 +17,7 @@ int	get_next_line(int fd, char **line)
 	int			ifeof;
 	int			length;
 
-	if (buffer == 0)
+	if (buffer == 0) 
 		check_firsttime(fd, &buffer, line);
 	else
 	{
@@ -27,17 +27,23 @@ int	get_next_line(int fd, char **line)
 		buffer = (char *)malloc((BUFFER_SIZE + length + 1) * sizeof(char));
 		ft_strlcpy(buffer, temp, length + 1);
 		//strjoin new line untili '\n' with buffer and store it in line.
+		ifeof = read(fd, buffer + length, BUFFER_SIZE);
+		*(buffer + length + ifeof) = '\0';
 	}
 	if (ifeof == -1)
 		return (-1);
 	if (ifeof < BUFFER_SIZE) /*check if EOF is reached*/
 	{
 		ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
-		if (ifnewline == (buffer + BUFFER_SIZE))
-			ifeof = 1;
+		if (*ifnewline == '\n')
+		{
+			//substring new line and memmove buffer
+			read_substr(line, &buffer, ifnewline);
+			return (1);
+		}
 		else
 		{
-			read_substr(line, &buffer, ifnewline);
+			continue_read(line, &buffer);
 			return (0);
 		}
 	}
