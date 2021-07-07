@@ -5,7 +5,7 @@
 #include "get_next_line.h"
 #define FILE_PATH "./test"
 
-void check_firsttime(int fd, char **buffer, char **line);
+int check_firsttime(int fd, char **buffer, char **line);
 void read_substr(char **line, char **buffer, char *ifnewline);
 void continue_read(char **line, char **buffer);
 
@@ -17,8 +17,8 @@ int	get_next_line(int fd, char **line)
 	int			ifeof;
 	int			length;
 
-	if (buffer == 0) 
-		check_firsttime(fd, &buffer, line);
+	if (buffer == 0)
+		ifeof = check_firsttime(fd, &buffer, line);
 	else
 	{
 		temp = ft_strdup(buffer);
@@ -49,11 +49,14 @@ int	get_next_line(int fd, char **line)
 	}
 	if (ifeof == BUFFER_SIZE) /*when EOF is not reached*/
 	{
-		ifnewline = ft_memchr_modified(buffer, '\n', BUFFER_SIZE);
+		//printf("buffer: %s\n", buffer);
+		length = ft_strlen(buffer);
+		ifnewline = ft_memchr_modified(buffer, '\n', length);
 		if (*ifnewline != '\n')
 		{
 			/*checks when there is no new line found, repeat the process*/
-			continue_read(line, &buffer);
+			//continue_read(line, &buffer);
+			buffer[0] = '\0';
 			return (get_next_line(fd, line));
 		}
 		else
@@ -67,7 +70,7 @@ int	get_next_line(int fd, char **line)
 	return (0);
 }
 
-void check_firsttime(int fd, char **buffer, char **line)
+int check_firsttime(int fd, char **buffer, char **line)
 {
 	char		*ifnewline;
 	char		*temp2;
@@ -88,10 +91,10 @@ void check_firsttime(int fd, char **buffer, char **line)
 		temp2 = ft_substr(*buffer, 0, length);
 		*line = temp2;
 		*buffer = ft_memmove(*buffer, ifnewline + 1, (BUFFER_SIZE - length));
-		return ;
+		return (ifeof);
 	}
 	*line = ft_strdup(*buffer);
-
+	return (ifeof);
 }
 
 /* this function reads the part until '\n' is reached
@@ -104,6 +107,11 @@ void read_substr(char **line, char **buffer, char *ifnewline)
 	//char	*joined_withb;
 	int		length;
 
+	if (*line == 0)
+	{
+		*line = malloc(1);
+		**line = '\0';
+	}
 	length = ifnewline - *buffer;
 	temp_substr = ft_substr(*buffer, 0, length);
 	joined_nob = ft_strjoin(*line, temp_substr);
@@ -111,7 +119,7 @@ void read_substr(char **line, char **buffer, char *ifnewline)
 	free(temp_substr);
 	free(*line);
 	*line = joined_nob;
-	*buffer = ft_memmove(*buffer, ifnewline + 1, (BUFFER_SIZE - length));
+	*buffer = ft_memmove(*buffer, ifnewline + 1, (ft_strlen(*buffer) - length));
 }
 
 /* this function will be repeated to keep reading
@@ -138,13 +146,13 @@ int	main(void)
 
     fd = open("test.txt", O_RDONLY);
 
-	get_next_line(fd, &str);
-
+	str = 0;
 	while (get_next_line(fd, &str) >= 0)
 	{
 		printf("%s\n", str);
 		free(str);
-    	printf("%d\n", get_next_line(fd, &str));
+		str = 0;
+    	//printf("%d\n", get_next_line(fd, &str));
 	}
 
 }
