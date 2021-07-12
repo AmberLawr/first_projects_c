@@ -21,6 +21,8 @@ char	*ft_strdup(const char *s)
 	int		length;
 	char	*target;
 
+	if (!s)
+		return (0);
 	index = 0;
 	length = ft_strlen(s);
 	target = (char *)malloc((length + 1) * sizeof(char));
@@ -64,9 +66,7 @@ void	*ft_memmove(void *dst, const void *src, size_t len)
 {
 	unsigned char	*csrc;
 	unsigned char	*cdest;
-	size_t			count;
 
-	count = 0;
 	csrc = (unsigned char *)src;
 	cdest = (unsigned char *)dst;
 	if ((cdest == 0) && (csrc == 0))
@@ -99,12 +99,12 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	newstr = (char *)malloc((length + 1) * sizeof(char));
 	if (newstr == 0)
 		return (0);
-	while (s1[index] != '\0' && s1[index] != '\n')
+	while (s1[index] != '\0')
 	{
 		newstr[index] = s1[index];
 		index++;
 	}
-	while (s2[jindex] != '\0' && s2[index] != '\n')
+	while (s2[jindex] != '\0')
 	{
 		newstr[index + jindex] = s2[jindex];
 		jindex++;
@@ -144,20 +144,15 @@ void	*ft_memcpy(void *dst, const void *src, size_t n)
 	return (cdest);
 }
 
-void	*ft_memchr_modified(const void *s, int c, size_t n)
+char	*ft_strchr(const char *s, int c)
 {
-	unsigned char	*s1;
-	unsigned char	c1;
-	size_t			index;
-
-	s1 = (unsigned char *)s;
-	c1 = (unsigned char)c;
-	index = 0;
-	while (index < n)
+	while (*s)
 	{
-		if (s1[index] == c1)
-			return (&s1[index]);
-		index++;
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
 	}
-	return (s1 + index);
+	if (c)
+		return ((char *)0);
+	return ((char *)s);
 }
