@@ -20,7 +20,7 @@ static char	*process_line(char **buf, int fd)
 	char		*joinedline;
 
 	ifn = ft_strchr(*buf, '\n');
-	if (ifn)
+	if (ifn != NULL)
 	{
 		line = ft_substr(*buf, 0, (ifn - *buf) + 1);
 		ft_memmove(*buf, *buf + (ifn - *buf) + 1,
@@ -31,7 +31,7 @@ static char	*process_line(char **buf, int fd)
 		line = ft_strdup(*buf);
 		**buf = '\0';
 		newpart = get_next_line(fd);
-		if (!newpart)
+		if (newpart == NULL)
 			return (line);
 		joinedline = ft_strjoin(line, newpart);
 		free (line);
@@ -85,7 +85,7 @@ static int	process_buffer(char **buf, int fd)
 	if (*buf == 0)
 	{
 		*buf = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-		if (!*buf || !initialise_buffer(buf, fd))
+		if (*buf == NULL || initialise_buffer(buf, fd) == 0)
 			return (0);
 	}
 	else
@@ -104,23 +104,9 @@ char	*get_next_line(int fd)
 
 	if (fd < 0 || fd > MAX_FD || BUFFER_SIZE < 1)
 		return (0);
-	if (!process_buffer(&buffer[fd], fd))
+	if (process_buffer(&buffer[fd], fd) == 0)
 		return (0);
 	if (buffer[fd] == 0)
 		return (0);
 	return (process_line(&buffer[fd], fd));
 }
-
-// int	main(void)
-// {
-//    int     fd;
-//    char    *str;
-
-//    fd = open(TEST_TXT, O_RDONLY);
-
-// 	while ((str = get_next_line(fd)))
-// 	{
-// 		printf("%s", str);
-// 		free(str);
-// 	}
-// }
