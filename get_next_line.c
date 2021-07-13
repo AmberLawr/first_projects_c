@@ -4,80 +4,32 @@
 #include <fcntl.h>
 #include "get_next_line.h"
 #include <limits.h>
-#define FILE_PATH "./test"
-char *get_next_line(int fd)
+#define TEST_TXT "test.txt"
+#define BIG_LINE_NO_NL "big_line_no_nl"
+#define FILE_PATH BIG_LINE_NO_NL
+
+static char	*process_line(char **buf, int fd);
+static int	initialise_buffer(char **buf, int fd);
+static int	process_buffer(char **buf, int fd);
+
+static char	*process_line(char **buf, int fd)
 {
-	static char	*buffer[MAX_FD];
-	char		*line;
-	char		*temporar;
-	char		*joinedbuffer;
-	int			bytesread;
 	char		*ifn;
-	int 		length;
+	char		*line;
 	char		*newpart;
 	char		*joinedline;
-	line = 0;
-	bytesread = 0;
-	temporar = 0;
-	joinedbuffer = 0;
-	ifn = 0;
-	length = 0;
-	if (fd < 0 || fd > MAX_FD || BUFFER_SIZE < 1)
-		return (0);
-	if (buffer[fd] == 0)
-	{
-		buffer[fd] = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-		if (!buffer[fd])
-			return (0);
-		bytesread = read(fd, buffer[fd], BUFFER_SIZE);
-		if (bytesread <= 0)
-		{
-			free(buffer[fd]);
-			return (0);
-		}
-		buffer[fd][bytesread] = '\0';
-	}
-	else
-	{
-		if (buffer[fd][0] == '\0')
-		{
-			bytesread = read(fd, buffer[fd], BUFFER_SIZE);
-			if (bytesread <= 0)
-			{
-				free(buffer[fd]);
-				return (0);
-			}
-			buffer[fd][bytesread] = '\0';
-		}
-		else
-		{
-			temporar = ft_strdup(buffer[fd]);
-			bytesread = read(fd, buffer[fd], BUFFER_SIZE);
-			if (bytesread < 0)
-			{
-				free(buffer[fd]);
-				free(temporar);
-				return (0);
-			}
-			buffer[fd][bytesread] = '\0';
-			joinedbuffer = ft_strjoin(temporar, buffer[fd]);
-			free(buffer[fd]);
-			free(temporar);
-			buffer[fd] = joinedbuffer;
-		}
-	}
-	ifn = ft_strchr(buffer[fd], '\n');
+
+	ifn = ft_strchr(*buf, '\n');
 	if (ifn)
 	{
-		length = ifn - buffer[fd];
-		line = ft_substr(buffer[fd], 0, length + 1);
-		buffer[fd] = ft_memmove(buffer[fd], buffer[fd] + length + 1, ft_strlen(buffer[fd]) - length);
-		return (line);
+		line = ft_substr(*buf, 0, (ifn - *buf) + 1);
+		ft_memmove(*buf, *buf + (ifn - *buf) + 1,
+			ft_strlen(*buf) - (ifn - *buf));
 	}
 	else
 	{
-		line = ft_strdup(buffer[fd]);
-		buffer[fd][0] = '\0';
+		line = ft_strdup(*buf);
+		**buf = '\0';
 		newpart = get_next_line(fd);
 		if (!newpart)
 			return (line);
@@ -85,14 +37,87 @@ char *get_next_line(int fd)
 		free (line);
 		free (newpart);
 		line = joinedline;
-		return (line);
 	}
+	return (line);
 }
+
+static int	initialise_buffer(char **buf, int fd)
+{
+	int			bytesread;
+
+	bytesread = read(fd, *buf, BUFFER_SIZE);
+	if (bytesread <= 0)
+	{
+		free(*buf);
+		*buf = NULL;
+		if (bytesread < 0)
+			return (0);
+	}
+	else
+		(*buf)[bytesread] = '\0';
+	return (1);
+}
+
+static int	join_buffer(char **buf, int fd)
+{
+	char		*temporar;
+	char		*joinedbuffer;
+	int			bytesread;
+
+	temporar = ft_strdup(*buf);
+	bytesread = read(fd, *buf, BUFFER_SIZE);
+	if (bytesread < 0)
+	{
+		free(*buf);
+		free(temporar);
+		return (0);
+	}
+	*(*buf + bytesread) = '\0';
+	joinedbuffer = ft_strjoin(temporar, *buf);
+	free(*buf);
+	free(temporar);
+	*buf = joinedbuffer;
+	return (1);
+}
+
+static int	process_buffer(char **buf, int fd)
+{
+	if (*buf == 0)
+	{
+		*buf = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+		if (!*buf || !initialise_buffer(buf, fd))
+			return (0);
+	}
+	else
+	{
+		if (**buf == '\0')
+			return (initialise_buffer(buf, fd));
+		else
+			return (join_buffer(buf, fd));
+	}
+	return (1);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*buffer[MAX_FD];
+
+	if (fd < 0 || fd > MAX_FD || BUFFER_SIZE < 1)
+		return (0);
+	if (!process_buffer(&buffer[fd], fd))
+		return (0);
+	if (buffer[fd] == 0)
+		return (0);
+	return (process_line(&buffer[fd], fd));
+}
+
 // int	main(void)
 // {
-//     int     fd;
-//     char    *str;
-//     fd = open("test.txt", O_RDONLY);
+//    int     fd;
+//    char    *str;
+
+//    fd = open(TEST_TXT, O_RDONLY);
+
 // 	while ((str = get_next_line(fd)))
 // 	{
 // 		printf("%s", str);
