@@ -1,20 +1,6 @@
 #include <stdlib.h>
 #include "get_next_line.h"
 
-size_t	ft_strlcpy(char *dst, const char *src, size_t size)
-{
-	size_t	len;
-
-	len = ft_strlen(src);
-	if (size)
-	{
-		while (--size && *src)
-			*dst++ = *src++;
-		*dst = '\0';
-	}
-	return (len);
-}
-
 char	*ft_strdup(const char *s)
 {
 	int		index;
@@ -62,26 +48,21 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	return (sub);
 }
 
-void	*ft_memmove(void *dst, const void *src, size_t len)
+void	*ft_memmove(void *dest, const void *src, size_t n)
 {
-	unsigned char	*csrc;
-	unsigned char	*cdest;
+	void	*r;
 
-	csrc = (unsigned char *)src;
-	cdest = (unsigned char *)dst;
-	if ((cdest == 0) && (csrc == 0))
-		return (0);
-	if (csrc < cdest)
+	if (!dest && !src)
+		return (dest);
+	r = dest;
+	while (n--)
 	{
-		while (len > 0)
-		{
-			cdest[len - 1] = csrc[len - 1];
-			len--;
-		}
+		if (src > dest)
+			*(unsigned char *)dest++ = *(unsigned char *)src++;
+		else
+			*((unsigned char *)dest + n) = *((unsigned char *)src + n);
 	}
-	else
-		ft_memcpy(cdest, csrc, len);
-	return (dst);
+	return (r);
 }
 
 char	*ft_strjoin(char const *s1, char const *s2)
@@ -119,40 +100,6 @@ size_t	ft_strlen(const char *s)
 
 	index = 0;
 	while (s[index] != '\0')
-	{
 		index++;
-	}
 	return (index);
-}
-
-void	*ft_memcpy(void *dst, const void *src, size_t n)
-{
-	unsigned char	*csrc;
-	unsigned char	*cdest;
-	size_t			index;
-
-	index = 0;
-	csrc = (unsigned char *)src;
-	cdest = (unsigned char *)dst;
-	if ((dst == 0) && (src == 0))
-		return (0);
-	while (index < n)
-	{
-		cdest[index] = csrc[index];
-		index++;
-	}
-	return (cdest);
-}
-
-char	*ft_strchr(const char *s, int c)
-{
-	while (*s)
-	{
-		if (*s == (char)c)
-			return ((char *)s);
-		s++;
-	}
-	if (c)
-		return ((char *)0);
-	return ((char *)s);
 }
