@@ -10,7 +10,21 @@
 
 static char	*process_line(char **buf, int fd);
 static int	initialise_buffer(char **buf, int fd);
-static int	process_buffer(char **buf, int fd);
+static int	join_buffer(char **buf, int fd);
+static char	*ft_strchr(const char *s, int c);
+
+static char	*ft_strchr(const char *s, int c)
+{
+	while (*s)
+	{
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
+	}
+	if (c)
+		return ((char *)0);
+	return ((char *)s);
+}
 
 static char	*process_line(char **buf, int fd)
 {
@@ -50,8 +64,7 @@ static int	initialise_buffer(char **buf, int fd)
 	{
 		free(*buf);
 		*buf = NULL;
-		if (bytesread < 0)
-			return (0);
+		return (0);
 	}
 	else
 		(*buf)[bytesread] = '\0';
@@ -80,33 +93,27 @@ static int	join_buffer(char **buf, int fd)
 	return (1);
 }
 
-static int	process_buffer(char **buf, int fd)
-{
-	if (*buf == 0)
-	{
-		*buf = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-		if (*buf == NULL || initialise_buffer(buf, fd) == 0)
-			return (0);
-	}
-	else
-	{
-		if (**buf == '\0')
-			return (initialise_buffer(buf, fd));
-		else
-			return (join_buffer(buf, fd));
-	}
-	return (1);
-}
-
 char	*get_next_line(int fd)
 {
 	static char	*buffer[MAX_FD];
 
 	if (fd < 0 || fd > MAX_FD || BUFFER_SIZE < 1)
 		return (0);
-	if (process_buffer(&buffer[fd], fd) == 0)
-		return (0);
 	if (buffer[fd] == 0)
-		return (0);
+	{
+		buffer[fd] = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+		if (buffer[fd] == NULL || initialise_buffer(&buffer[fd], fd) == 0)
+			return (0);
+	}
+	else
+	{
+		if (buffer[fd][0] == '\0')
+		{
+			if (initialise_buffer(&buffer[fd], fd) == 0)
+				return (0);
+		}
+		else if (join_buffer(&buffer[fd], fd) == 0)
+			return (0);
+	}
 	return (process_line(&buffer[fd], fd));
 }
