@@ -54,13 +54,29 @@ check_buffer()
 {
 	if (buffer == filled)
 	{
-
+		if (buffer[0] == '\0)
+		{
+			buffer = (char)malloc((BUFFER_SIZE + 1) * sizeof (char));
+			bytesread = read(fd, buffer, BUFFER_SIZE);
+			buffer[bytesread + 1] = '\0';
+			return (buffer);
+		}
+		else
+		{
+			temporar = ft_strdup(buffer);
+			buffer = (char)malloc((BUFFER_SIZE + 1) * sizeof (char));
+			bytesread = read(fd, buffer, BUFFER_SIZE);
+			joinedbuf = ft_strjoin(temporar, buffer);
+			return (joinedbuf);
+		}
 
 	}
 	else
 	{
-
-
+		buffer = (char)malloc((BUFFER_SIZE + 1) * sizeof (char));
+		bytesread = read(fd, buffer, BUFFER_SIZE);
+		buffer[bytesread + 1] = '\0';
+		return (buffer);
 	}
 }
 */
@@ -69,17 +85,22 @@ check_buffer()
 /*
 joinline()
 {
-	if (line == filles)
+	if (line == filled)
 	{
-
+		temporar = ft_strdup(line);
+		joinedline = ft_strjoin(temporar, buffer);
+		free line;
+		free buffer;
+		line = joinedline;
+		return (line);
 
 	}
-	else
+	else if (line == NULL)
 	{
-
-
+		line = ft_strdup(buffer);
+		free buffer;
+		return (line);
 	}
-}
 */
 
 
