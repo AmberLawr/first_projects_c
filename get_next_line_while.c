@@ -7,9 +7,9 @@
 #define BIG_LINE_NO_NL "big_line_no_nl"
 #define FILE_PATH BIG_LINE_NO_NL
 
-char	*check_buffer(char **buffer, int fd);
-void	checkline(char **buffer, char **line);
-void	checknewline(char **buffer, char **line);
+int 	check_buffer(char **buffer, int fd);
+int		checkline(char **buffer, char **line);
+int		checknewline(char **buffer, char **line);
 
 static char	*ft_strchr(const char *s, int c)
 {
@@ -26,30 +26,37 @@ static char	*ft_strchr(const char *s, int c)
 
 char *get_next_line(int fd)
 {
-	char	*buffer;
-	char	*line;
-	int		bytesread;
-	
+	static char *buffer;
+	char	    *line;
+	int		    bytesread;
+
 	//1. read into buffer first time:
-	buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof (char));
-	bytesread = read(fd, buffer, BUFFER_SIZE);
-		if (bytesread < 0)
-			return (NULL);
-	buffer[BUFFER_SIZE + 1] = '\0';
-	while (bytesread > 0)
+	if (!buffer)
+    {
+        buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof (char));
+        bytesread = read(fd, buffer, BUFFER_SIZE);
+        if (bytesread < 0)
+            return (NULL);
+        buffer[bytesread] = '\0';
+    }
+	line = NULL;
+	while (1)
 	{
-		check_buffer(&buffer, fd);
-		checkline(&buffer, &line);
+		if (!check_buffer(&buffer, fd))
+            break ;
+		if (checkline(&buffer, &line))
+            break ;
+        if (line && *line == '\0')
+        {
+            return (NULL);
+        }
 	}
-	if (bytesread == 0)
-	{
-		check_buffer(&buffer, fd);
-		checkline(&buffer, &line);
-		return (line);
-	}
+	if (line)
+        return (line);
+    return (NULL);
 }
 
-char	*check_buffer(char **buffer, int fd)
+int    check_buffer(char **buffer, int fd)
 {
 	int		bytesread;
 	char	*temporar;
@@ -58,71 +65,73 @@ char	*check_buffer(char **buffer, int fd)
 	if (buffer[0][0] == '\0')
 	{
 		bytesread = read(fd, *buffer, BUFFER_SIZE);
-		*buffer[bytesread + 1] = '\0';
-		return (*buffer);
+		if (!bytesread)
+			return (0);
+		(*buffer)[bytesread] = '\0';
 	}
 	else
 	{
-		temporar = ft_strdup(*buffer);
+		temporar = ft_strdup(*buffer); // temporar and buffer
 		bytesread = read(fd, *buffer, BUFFER_SIZE);
-		joinedbuf = ft_strjoin(temporar, *buffer);
-		return (joinedbuf);
+		(*buffer)[bytesread] = '\0';
+		joinedbuf = ft_strjoin(temporar, *buffer); // joinedbuf and temporar and buffer
+		free(temporar);
+		free(*buffer);
+		*buffer = joinedbuf;
 	}
+	return (1);
 }
 
-void checkline(char **buffer, char **line)
+int checkline(char **buffer, char **line)
 {
 	char	*temporar;
 	char	*joinedline;
+	int     readsuccess;
 
 	if (*line == NULL)
-	{
-		checknewline(line, buffer);
-	}
+		readsuccess = checknewline(buffer, line);
 	else if (*line != NULL)
 	{
 		temporar = ft_strdup(*line);
-
-		checknewline(line, buffer);
-		
-		joinedline = ft_strjoin (temporar, *line);
-		free (temporar);
+		readsuccess = checknewline(buffer, line);
+		joinedline = ft_strjoin(temporar, *line);
+		free(temporar);
+		free(*line);
 		*line = joinedline;
 	}
+	return (readsuccess);
 }
 
-void checknewline(char **buffer, char **line)
+int checknewline(char **buffer, char **line)
 {
 	char	*ifn;
-	int		length;
 
 	ifn = ft_strchr(*buffer, '\n');
-	length = ft_strlen(ifn);
 	if (ifn != NULL)
 	{
-		*line = ft_substr(*buffer, 0, ifn - *buffer);
-		ft_memmove(*buffer, ifn + 1, length + 1);
+		*line = ft_substr(*buffer, 0, ifn - *buffer + 1);
+		ft_memmove(*buffer, ifn + 1, ft_strlen(ifn + 1) + 1);
+		return (1);
 	}
 	else
 	{
 		*line = ft_strdup(*buffer);
-		*buffer[0] = '\0';
+		(*buffer)[0] = '\0';
+		return (0);
 	}
 }
 
+// int	main(void)
+// {
+// 	int     fd;
+// 	char	*result;
 
-int	main(void)
-{
-	int     fd;
-	char	*result;
+//     fd = open("test.txt", O_RDONLY);
+// 	result = get_next_line(fd);
 
-    fd = open("test.txt", O_RDONLY);
-	result = get_next_line(fd);
-
-	while (result != NULL)
-	{
-    	printf("%s\n", result);
-		result = get_next_line(fd);
-	}
-
-}
+// 	while (result != NULL)
+// 	{
+//     	printf("%s\n", result);
+// 		result = get_next_line(fd);
+// 	}
+// }
